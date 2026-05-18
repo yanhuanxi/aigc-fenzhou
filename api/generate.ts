@@ -1,16 +1,19 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: '只支持 POST 请求' });
+export default async function handler(
+  request: VercelRequest,
+  response: VercelResponse
+) {
+  if (request.method !== 'POST') {
+    return response.status(405).json({ error: '只支持 POST 请求' });
   }
 
   try {
-    const { apiKey, plotDescription, shotCount, duration, imageBase64 } = req.body;
+    const { apiKey, plotDescription, shotCount, duration, imageBase64 } = request.body;
 
     if (!apiKey) {
-      return res.status(400).json({ error: 'API Key 不能为空' });
+      return response.status(400).json({ error: 'API Key 不能为空' });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -57,13 +60,13 @@ ${duration}
       result = await model.generateContent(prompt);
     }
 
-    const response = await result.response;
-    const text = response.text();
+    const apiResponse = await result.response;
+    const text = apiResponse.text();
 
-    res.status(200).json({ success: true, content: text });
+    return response.status(200).json({ success: true, content: text });
   } catch (error) {
     console.error('API调用错误:', error);
-    res.status(500).json({ 
+    return response.status(500).json({ 
       error: '生成失败，请检查API Key是否正确，或稍后重试',
       details: (error as Error).message 
     });
